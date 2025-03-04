@@ -1,4 +1,4 @@
-#include "s3k/s3k.h"
+#include "s3k.h"
 
 typedef union {
 	struct {
