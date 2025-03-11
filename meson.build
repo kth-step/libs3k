@@ -1,5 +1,5 @@
 project('libs3k', 'c', version : '1.0')
 subdir('src')
 incdirs = include_directories('include')
-libs3k = static_library('s3k', sources, include_directories : incdirs)
-libs3k_dep = declare_dependency(link_with : libs3k, include_directories : incdirs)
+lib = static_library('s3k', sources, include_directories : incdirs)
+dep = declare_dependency(link_with : lib, include_directories : incdirs)
