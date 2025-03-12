@@ -150,9 +150,9 @@
   \item[Returns]
     \begin{description}
       \item[]
-      \item[\texttt{ERR\_SUCCESS}] If the capability is successfully read.
-      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
-      \item[\texttt{ERR\_EMPTY}] If there is no capability at \verb|idx|.
+      \item[\texttt{S3K\_SUCCESS}] If the capability is successfully read.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
+      \item[\texttt{S3K\_ERR\_EMPTY}] If there is no capability at \verb|idx|.
     \end{description}
   \item[Notes] Ensure that the \verb|cap| buffer is properly allocated and can hold the capability description. This function is useful for inspecting capabilities before performing operations that depend on them.
 \end{syscalldoc}
@@ -172,10 +172,10 @@
   \item[Returns]
     \begin{description}
       \item[]
-      \item[\texttt{ERR\_SUCCESS}] If the capability is successfully moved.
-      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|src| or \verb|dst| is out of range.
-      \item[\texttt{ERR\_SRC\_EMPTY}] If there is no capability at \verb|src|.
-      \item[\texttt{ERR\_DST\_OCCUPIED}] If there is already a capability at \verb|dst|.
+      \item[\texttt{S3K\_SUCCESS}] If the capability is successfully moved.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|src| or \verb|dst| is out of range.
+      \item[\texttt{S3K\_ERR\_SRC\_EMPTY}] If there is no capability at \verb|src|.
+      \item[\texttt{S3K\_ERR\_DST\_OCCUPIED}] If there is already a capability at \verb|dst|.
     \end{description}
 
   \item[Notes] Ensure that the destination index \verb|dst| is not occupied before moving the capability. This function is useful for reorganizing capabilities within the table.
@@ -195,9 +195,9 @@
   \item[Returns]
     \begin{description}
       \item[]
-      \item[\texttt{ERR\_SUCCESS}] If the capability is successfully deleted.
-      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
-      \item[\texttt{ERR\_EMPTY}] If there is no capability at \verb|idx|.
+      \item[\texttt{S3K\_SUCCESS}] If the capability is successfully deleted.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
+      \item[\texttt{S3K\_ERR\_EMPTY}] If there is no capability at \verb|idx|.
     \end{description}
 
   \item[Notes] Ensure that the index \verb|idx| is valid and that there is a capability present at that index before attempting to delete it. This function is useful for managing the capability table by removing unused or unwanted capabilities.
@@ -217,9 +217,9 @@
   \item[Returns]
     \begin{description}
       \item[]
-      \item[\texttt{ERR\_SUCCESS}] If the children are successfully revoked.
-      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
-      \item[\texttt{ERR\_EMPTY}] If there is no capability at \verb|idx|.
+      \item[\texttt{S3K\_SUCCESS}] If the children are successfully revoked.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
+      \item[\texttt{S3K\_ERR\_EMPTY}] If there is no capability at \verb|idx|.
     \end{description}
 
   \item[Notes] Ensure that the index \verb|idx| is valid and that there is a capability present at that index before attempting to revoke its children. This function is useful for managing the capability table by reclaiming resources from child capabilities.
@@ -241,16 +241,67 @@
   \item[Returns]
     \begin{description}
       \item[]
-      \item[\texttt{ERR\_SUCCESS}] If the new capability is successfully derived and placed.
-      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|src| or \verb|dst| is out of range.
-      \item[\texttt{ERR\_SRC\_EMPTY}] If there is no capability at \verb|src|.
-      \item[\texttt{ERR\_DST\_OCCUPIED}] If there is already a capability at \verb|dst|.
-      \item[\texttt{ERR\_INVALID\_DERIVATION}] If \verb|newcap| cannot be derived from the capability at index \verb|src|.
+      \item[\texttt{S3K\_SUCCESS}] If the new capability is successfully derived and placed.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|src| or \verb|dst| is out of range.
+      \item[\texttt{S3K\_ERR\_SRC\_EMPTY}] If there is no capability at \verb|src|.
+      \item[\texttt{S3K\_ERR\_DST\_OCCUPIED}] If there is already a capability at \verb|dst|.
+      \item[\texttt{S3K\_ERR\_INVALID\_DERIVATION}] If \verb|newcap| cannot be derived from the capability at index \verb|src|.
     \end{description}
 
   \item[Notes]
 	  Ensure that the indices \verb|src| and \verb|dst| are valid and that there is a capability present at \verb|src| before attempting to derive a new capability. This function is useful for creating new capabilities based on existing ones.
 \end{syscalldoc}
 
+\begin{syscalldoc}{s3k\_pmp\_load}
+  \item[Syntax] \lstinline{s3k_err_t s3k_pmp_load(s3k_cidx_t pmpidx, s3k_pmp_slot_t pmpslot)}
+
+  \item[Description] Loads a PMP configuration from the capability at index \verb|pmpidx| in the caller's capability table into the specified PMP slot \verb|pmpslot|. This function is used to configure the Physical Memory Protection (PMP) settings for the caller.
+
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{pmpidx}] The index in the caller's capability table where the PMP capability resides.
+      \item[\texttt{pmpslot}] The PMP slot of the caller to which the PMP configuration is written.
+    \end{description}
+
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{S3K\_SUCCESS}] If the PMP slot was successfully configured using the PMP capability.
+      \item[\texttt{S3K\_ERR\_EMPTY}] If there is no capability at \verb|pmpidx|.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|pmpidx| is out of range.
+      \item[\texttt{S3K\_ERR\_INVALID\_PMP}] If the capability at \verb|pmpidx| is not an unused PMP capability.
+      \item[\texttt{S3K\_ERR\_INVALID\_SLOT}] If \verb|pmpslot| is out of range.
+      \item[\texttt{S3K\_ERR\_DST\_OCCUPIED}] If the PMP slot \verb|pmpslot| has an existing configuration.
+    \end{description}
+
+  \item[Notes] Ensure that the index \verb|pmpidx| is valid and that there is a PMP capability present at that index before attempting to load the PMP configuration. This function is useful for configuring memory protection settings.
+\end{syscalldoc}
+
+
+\begin{syscalldoc}{s3k\_pmp\_unload}
+  \item[Syntax] \lstinline{s3k_err_t s3k_pmp_unload(s3k_cidx_t pmpidx)}
+
+  \item[Description] 
+	  Unloads a PMP configuration from the capability at index \verb|pmpidx| in the caller's capability table. This function is used to clear the Physical Memory Protection (PMP) settings for the caller.
+
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{pmpidx}] The index in the caller's capability table where the PMP capability resides.
+    \end{description}
+
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{S3K\_SUCCESS}] If a PMP slot was successfully cleared using the PMP capability.
+      \item[\texttt{S3K\_ERR\_EMPTY}] If there is no capability at \verb|pmpidx|.
+      \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] If \verb|pmpidx| is out of range.
+      \item[\texttt{S3K\_ERR\_INVALID\_PMP}] If the capability at \verb|pmpidx| is not an used PMP capability.
+    \end{description}
+
+    \item[Notes] 
+	    Ensure that the index \verb|pmpidx| is valid and that there is a PMP capability present at that index before attempting to unload the PMP configuration. This function is useful for clearing memory protection settings.
+\end{syscalldoc}
 
 \end{document}
