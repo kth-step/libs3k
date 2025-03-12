@@ -8,6 +8,7 @@
 \usepackage{enumitem}
 \usepackage{longtable}
 \usepackage{tcolorbox}
+\tcbuselibrary{breakable}
 
 \title{S3K: System Calls Documentation}
 \author{Henrik Karlsson}
@@ -17,8 +18,7 @@
 
 
 \newenvironment{syscalldoc}[1]{
-  \subsection{\syscall{#1}} %\label{sec:#1}
-  \begin{tcolorbox}
+  \begin{tcolorbox}[breakable,title=\subsection{\syscall{#1}}]
   \begin{description}[leftmargin=!,style=nextline,noitemsep]
 }{
   \end{description}
