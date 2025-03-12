@@ -1,0 +1,256 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[top=1in, bottom=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{tcolorbox}
+
+\title{S3K: System Calls Documentation}
+\author{Henrik Karlsson}
+\date{\today}
+
+\newcommand{\syscall}[1]{\texttt{#1}}
+
+
+\newenvironment{syscalldoc}[1]{
+  \subsection{\syscall{#1}} %\label{sec:#1}
+  \begin{tcolorbox}
+  \begin{description}[leftmargin=!,style=nextline,noitemsep]
+}{
+  \end{description}
+  \end{tcolorbox}
+}
+
+\lstset{basicstyle=\ttfamily,breaklines=true,breakindent=2em}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction to System Calls}
+% Brief explanation of system calls
+
+\section{List of System Calls}
+
+%\begin{longtable}{ll}
+%    \toprule
+%    \textbf{System Call} & \textbf{Description} \\
+%    \midrule
+%    \syscall{s3k\_get\_pid()} & Fetches the current process's ID \\
+%    \syscall{s3k\_get\_time()} & Retrieves the current system time \\
+%    \syscall{s3k\_get\_timeout()} & Retrieves the current timeout value \\
+%    \syscall{s3k\_reg\_read()} & Reads the value of a specified register \\
+%    \syscall{s3k\_reg\_write()} & Writes a value to a specified register \\
+%    \syscall{s3k\_sync()} & Synchronizes the system state \\
+%    \syscall{s3k\_sleep()} & Pauses execution for a specified time \\
+%    \syscall{s3k\_cap\_read()} & Reads a capability from a specified index \\
+%    \syscall{s3k\_cap\_move()} & Moves a capability from one index to another \\
+%    \syscall{s3k\_cap\_delete()} & Deletes a capability at a specified index \\
+%    \syscall{s3k\_cap\_revoke()} & Revokes a capability at a specified index \\
+%    \syscall{s3k\_cap\_derive()} & Derives a new capability from an existing one \\
+%    \syscall{s3k\_pmp\_load()} & Loads a PMP configuration \\
+%    \syscall{s3k\_pmp\_unload()} & Unloads a PMP configuration \\
+%    \syscall{s3k\_mon\_suspend()} & Suspends a monitor \\
+%    \syscall{s3k\_mon\_resume()} & Resumes a monitor \\
+%    \syscall{s3k\_mon\_state\_get()} & Retrieves the state of a monitor \\
+%    \syscall{s3k\_mon\_yield()} & Yields control to a monitor \\
+%    \syscall{s3k\_mon\_reg\_read()} & Reads a register value for a monitor \\
+%    \syscall{s3k\_mon\_reg\_write()} & Writes a register value for a monitor \\
+%    \syscall{s3k\_mon\_cap\_read()} & Reads a capability for a monitor \\
+%    \syscall{s3k\_mon\_cap\_send()} & Sends a capability to a monitor \\
+%    \syscall{s3k\_mon\_pmp\_load()} & Loads a PMP configuration for a monitor \\
+%    \syscall{s3k\_mon\_pmp\_unload()} & Unloads a PMP configuration for a monitor \\
+%    \syscall{s3k\_sock\_send()} & Sends a message via a socket \\
+%    \syscall{s3k\_sock\_recv()} & Receives a message via a socket \\
+%    \syscall{s3k\_sock\_sendrecv()} & Sends and receives a message via a socket \\
+%    \bottomrule
+%\end{longtable}
+
+\newpage
+\section{System Call Description}
+
+\begin{syscalldoc}{s3k\_get\_pid}
+  \item[Syntax] \lstinline{s3k_pid_t s3k_get_pid(void)}
+  \item[Description] Fetches the process ID of the caller.
+  \item[Returns] The process ID of the caller.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_get\_time}
+  \item[Syntax] \lstinline{uint64_t s3k_get_time(void)}
+  \item[Description] Fetches the current value of the real-time clock.
+  \item[Returns] The current value of the real-time clock.
+  \item[Notes] The frequency of the RTC is hardware dependant.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_get\_timeout}
+  \item[Syntax] \lstinline{uint64_t s3k_get_timeout(void)}
+  \item[Description] Fetches the preemption time, which indicates how long the current process can run before being preempted.
+  \item[Returns] The current value of the preemption time.
+  \item[Notes] The frequency of the RTC is hardware dependant.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_reg\_read}
+  \item[Syntax] \lstinline{uint64_t s3k_reg_read(s3k_reg_t reg)}
+  \item[Description] Reads the value of the specified register \verb|reg|. This system call is primarily used to read S3K's virtual registers but can also read standard RISC-V registers.
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{reg}] The register to read. Should be one of S3K's virtual registers or a standard RISC-V register.
+    \end{description}
+  \item[Returns] The value of the specified register \verb|reg|. Returns 0 if \verb|reg| is invalid.
+  \item[Notes] Returns 0 if the specified register is invalid. Ensure that the register being read is valid.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_reg\_write}
+  \item[Syntax] \lstinline{uint64_t s3k_reg_write(s3k_reg_t reg, uint64_t val)}
+  \item[Description] Writes the value \verb|val| to the specified register \verb|reg|. This system call is primarily used to write to S3K's virtual registers but can also write to standard RISC-V registers.
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{reg}] The register to write to. Should be one of S3K's virtual registers or a standard RISC-V register.
+      \item[\texttt{val}] The value to write to the register.
+    \end{description}
+  \item[Returns] The value of the specified register \verb|reg| before the write operation. Returns 0 if \verb|reg| is invalid.
+  \item[Notes] Returns 0 if the specified register is invalid. Ensure that the register being written to is valid.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_sync}
+  \item[Syntax] \lstinline{void s3k_sync(void)}
+  \item[Description] Synchronizes the process's context with capabilities. This ensures that any changes to capabilities are reflected in the process's execution context.
+  \item[Returns] This function does not return a value.
+  \item[Notes] This function should be called after modifying capabilities such as time slices or PMP to ensure that the changes take effect immediately.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_sleep}
+  \item[Syntax] \lstinline{void s3k_sleep(uint64_t time)}
+  \item[Description] Sets the process to sleep until the real-time clock (RTC) reaches the specified \verb|time|. If \verb|time| is 0, the process sleeps until the next timer preemption, as determined by \verb|s3k_get_timeout()|.
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{time}] The time at which the process should wake up. If 0, the process sleeps until the next timer preemption.
+    \end{description}
+  \item[Returns] This function does not return a value.
+  \item[Notes] Ensure that the \verb|time| value is valid and represents a future point in time. If \verb|time| is in the past, the process will wake up immediately.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_cap\_read}
+  \item[Syntax] \lstinline{s3k_err_t s3k_cap_read(s3k_cidx_t idx, s3k_cap_t *cap)}
+  \item[Description] Reads the description of the capability at index \verb|idx| in the caller's capability table. This function is used to retrieve information about a specific capability.
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{idx}] The index in the caller's capability table.
+      \item[\texttt{cap}] A pointer to a buffer where the capability description will be stored.
+    \end{description}
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{ERR\_SUCCESS}] If the capability is successfully read.
+      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
+      \item[\texttt{ERR\_EMPTY}] If there is no capability at \verb|idx|.
+    \end{description}
+  \item[Notes] Ensure that the \verb|cap| buffer is properly allocated and can hold the capability description. This function is useful for inspecting capabilities before performing operations that depend on them.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_cap\_move}
+  \item[Syntax] \lstinline{s3k_err_t s3k_cap_move(s3k_cidx_t src, s3k_cidx_t dst)}
+
+  \item[Description] Moves a capability from index \verb|src| to \verb|dst| in the caller's capability table. This function is used to reorganize capabilities within the table.
+
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{src}] The index in the caller's capability table from which the capability will be moved.
+      \item[\texttt{dst}] The index in the caller's capability table to which the capability will be moved.
+    \end{description}
+
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{ERR\_SUCCESS}] If the capability is successfully moved.
+      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|src| or \verb|dst| is out of range.
+      \item[\texttt{ERR\_SRC\_EMPTY}] If there is no capability at \verb|src|.
+      \item[\texttt{ERR\_DST\_OCCUPIED}] If there is already a capability at \verb|dst|.
+    \end{description}
+
+  \item[Notes] Ensure that the destination index \verb|dst| is not occupied before moving the capability. This function is useful for reorganizing capabilities within the table.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_cap\_delete}
+  \item[Syntax] \lstinline{s3k_err_t s3k_cap_delete(s3k_cidx_t idx)}
+
+  \item[Description] Deletes a capability at index \verb|idx| in the caller's capability table. This function is used to remove a capability from the table, freeing up the index for future use.
+
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{idx}] The index in the caller's capability table from which the capability will be deleted.
+    \end{description}
+
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{ERR\_SUCCESS}] If the capability is successfully deleted.
+      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
+      \item[\texttt{ERR\_EMPTY}] If there is no capability at \verb|idx|.
+    \end{description}
+
+  \item[Notes] Ensure that the index \verb|idx| is valid and that there is a capability present at that index before attempting to delete it. This function is useful for managing the capability table by removing unused or unwanted capabilities.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_cap\_revoke}
+  \item[Syntax] \lstinline{s3k_err_t s3k_cap_revoke(s3k_cidx_t idx)}
+
+  \item[Description] Revokes the children of the capability at index \verb|idx| in the caller's capability table. This function is used to reclaim resources that have been granted to child capabilities.
+
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{idx}] The index in the caller's capability table from which the capability's children will be revoked.
+    \end{description}
+
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{ERR\_SUCCESS}] If the children are successfully revoked.
+      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|idx| is out of range.
+      \item[\texttt{ERR\_EMPTY}] If there is no capability at \verb|idx|.
+    \end{description}
+
+  \item[Notes] Ensure that the index \verb|idx| is valid and that there is a capability present at that index before attempting to revoke its children. This function is useful for managing the capability table by reclaiming resources from child capabilities.
+\end{syscalldoc}
+
+\begin{syscalldoc}{s3k\_cap\_derive}
+  \item[Syntax] \lstinline{s3k_err_t s3k_cap_derive(s3k_cidx_t src, s3k_cidx_t dst, s3k_cap_t newcap)}
+  \item[Description]
+	  Derives a new capability \verb|newcap| from the capability at index \verb|src| in the caller's capability table. The new capability is placed at index \verb|dst| in the caller's capability table.
+
+  \item[Parameters]
+    \begin{description}
+      \item[]
+      \item[\texttt{src}] The index in the caller's capability table from which the new capability will be derived.
+      \item[\texttt{dst}] The index in the caller's capability table where the new capability will be placed.
+      \item[\texttt{newcap}] The new capability to be derived and placed at \verb|dst|.
+    \end{description}
+
+  \item[Returns]
+    \begin{description}
+      \item[]
+      \item[\texttt{ERR\_SUCCESS}] If the new capability is successfully derived and placed.
+      \item[\texttt{ERR\_INVALID\_INDEX}] If \verb|src| or \verb|dst| is out of range.
+      \item[\texttt{ERR\_SRC\_EMPTY}] If there is no capability at \verb|src|.
+      \item[\texttt{ERR\_DST\_OCCUPIED}] If there is already a capability at \verb|dst|.
+      \item[\texttt{ERR\_INVALID\_DERIVATION}] If \verb|newcap| cannot be derived from the capability at index \verb|src|.
+    \end{description}
+
+  \item[Notes]
+	  Ensure that the indices \verb|src| and \verb|dst| are valid and that there is a capability present at \verb|src| before attempting to derive a new capability. This function is useful for creating new capabilities based on existing ones.
+\end{syscalldoc}
+
+
+\end{document}
