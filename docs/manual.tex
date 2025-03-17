@@ -9,16 +9,33 @@
 \usepackage{longtable}
 \usepackage{tcolorbox}
 \tcbuselibrary{breakable}
+\usepackage{todonotes}
 
-\title{S3K: System Calls Documentation}
+\title{S3K Manual}
 \author{Henrik Karlsson}
 \date{\today}
 
-\newcommand{\syscall}[1]{\texttt{#1}}
-
 
 \newenvironment{syscalldoc}[1]{
-  \begin{tcolorbox}[breakable,title=\subsection{\syscall{#1}}]
+  \begin{tcolorbox}[breakable,title=\subsection{\texttt{#1()}}]
+  \begin{description}[leftmargin=!,style=nextline,noitemsep]
+}{
+  \end{description}
+  \end{tcolorbox}
+}
+
+\newenvironment{enumdoc}[2]{
+  \begin{tcolorbox}[breakable,title=\subsection{\texttt{enum #1}}]
+  #2
+  \begin{description}[leftmargin=!,style=nextline,noitemsep]
+}{
+  \end{description}
+  \end{tcolorbox}
+}
+
+\newenvironment{structdoc}[2]{
+  \begin{tcolorbox}[breakable,title=\subsection{\texttt{struct #1}}]
+  #2
   \begin{description}[leftmargin=!,style=nextline,noitemsep]
 }{
   \end{description}
@@ -32,47 +49,39 @@
 \maketitle
 \tableofcontents
 
-\section{Introduction to System Calls}
-% Brief explanation of system calls
+\section{S3K Types}
 
-\section{List of System Calls}
+\begin{enumdoc}{s3k\_err\_t}{Enum type is used for reporting errors with system calls:}
+  \item[\texttt{S3K\_SUCCESS}] No error occurred.
+  \item[\texttt{S3K\_ERR\_EMPTY}] Expected a capability at the specified index, but the entry was empty.
+  \item[\texttt{S3K\_ERR\_SRC\_EMPTY}] Expected a capability at the source index (e.g., for move or derive operations), but the entry was empty.
+  \item[\texttt{S3K\_ERR\_DST\_OCCUPIED}] The destination slot is already occupied by a capability.
+  \item[\texttt{S3K\_ERR\_INVALID\_INDEX}] The specified capability index is out of range.
+  \item[\texttt{S3K\_ERR\_INVALID\_DERIVATION}] The capability could not be derived from the source capability.
+  \item[\texttt{S3K\_ERR\_INVALID\_MONITOR}] Expected a monitor capability, but the capability was invalid.
+  \item[\texttt{S3K\_ERR\_INVALID\_PID}] The provided process ID is invalid.
+  \item[\texttt{S3K\_ERR\_INVALID\_STATE}] The process or IPC endpoint is in an unexpected state.
+  \item[\texttt{S3K\_ERR\_INVALID\_PMP}] The capability is not the expected PMP capability.
+  \item[\texttt{S3K\_ERR\_INVALID\_SLOT}] The specified PMP slot is invalid.
+  \item[\texttt{S3K\_ERR\_INVALID\_SOCKET}] The socket capability is invalid for the operation.
+  \item[\texttt{S3K\_ERR\_INVALID\_SYSCALL}] The system call number is invalid.
+  \item[\texttt{S3K\_ERR\_INVALID\_REGISTER}] The specified register number is invalid.
+  \item[\texttt{S3K\_ERR\_INVALID\_CAPABILITY}] The capability is invalid.
+  \item[\texttt{S3K\_ERR\_NO\_RECEIVER}] The message could not be sent because there is no receiver.
+  \item[\texttt{S3K\_ERR\_PREEMPTED}] The system call was preempted.
+  \item[\texttt{S3K\_ERR\_TIMEOUT}] The IPC sendrecv operation timed out before receiving a response.
+  \item[\texttt{S3K\_ERR\_SUSPENDED}] The system call was aborted because the caller is set to be suspended.
+\end{enumdoc}
 
-%\begin{longtable}{ll}
-%    \toprule
-%    \textbf{System Call} & \textbf{Description} \\
-%    \midrule
-%    \syscall{s3k\_get\_pid()} & Fetches the current process's ID \\
-%    \syscall{s3k\_get\_time()} & Retrieves the current system time \\
-%    \syscall{s3k\_get\_timeout()} & Retrieves the current timeout value \\
-%    \syscall{s3k\_reg\_read()} & Reads the value of a specified register \\
-%    \syscall{s3k\_reg\_write()} & Writes a value to a specified register \\
-%    \syscall{s3k\_sync()} & Synchronizes the system state \\
-%    \syscall{s3k\_sleep()} & Pauses execution for a specified time \\
-%    \syscall{s3k\_cap\_read()} & Reads a capability from a specified index \\
-%    \syscall{s3k\_cap\_move()} & Moves a capability from one index to another \\
-%    \syscall{s3k\_cap\_delete()} & Deletes a capability at a specified index \\
-%    \syscall{s3k\_cap\_revoke()} & Revokes a capability at a specified index \\
-%    \syscall{s3k\_cap\_derive()} & Derives a new capability from an existing one \\
-%    \syscall{s3k\_pmp\_load()} & Loads a PMP configuration \\
-%    \syscall{s3k\_pmp\_unload()} & Unloads a PMP configuration \\
-%    \syscall{s3k\_mon\_suspend()} & Suspends a monitor \\
-%    \syscall{s3k\_mon\_resume()} & Resumes a monitor \\
-%    \syscall{s3k\_mon\_state\_get()} & Retrieves the state of a monitor \\
-%    \syscall{s3k\_mon\_yield()} & Yields control to a monitor \\
-%    \syscall{s3k\_mon\_reg\_read()} & Reads a register value for a monitor \\
-%    \syscall{s3k\_mon\_reg\_write()} & Writes a register value for a monitor \\
-%    \syscall{s3k\_mon\_cap\_read()} & Reads a capability for a monitor \\
-%    \syscall{s3k\_mon\_cap\_send()} & Sends a capability to a monitor \\
-%    \syscall{s3k\_mon\_pmp\_load()} & Loads a PMP configuration for a monitor \\
-%    \syscall{s3k\_mon\_pmp\_unload()} & Unloads a PMP configuration for a monitor \\
-%    \syscall{s3k\_sock\_send()} & Sends a message via a socket \\
-%    \syscall{s3k\_sock\_recv()} & Receives a message via a socket \\
-%    \syscall{s3k\_sock\_sendrecv()} & Sends and receives a message via a socket \\
-%    \bottomrule
-%\end{longtable}
+
+\begin{structdoc}{s3k\_msg\_t}{A struct used with message passing:}
+  \item[\texttt{s3k\_cidx\_t cap\_idx}] Index for capability to send, or slot for receiveing a capability.
+  \item[\texttt{bool send\_cap}] If capability at \texttt{cap\_idx} should be sent.
+  \item[\texttt{uint64\_t data[4]}] 256 bit of data to send.
+\end{structdoc}
 
 \newpage
-\section{System Call Description}
+\section{S3K System Calls}
 
 \begin{syscalldoc}{s3k\_get\_pid}
   \item[Syntax] \lstinline{s3k_pid_t s3k_get_pid(void)}
