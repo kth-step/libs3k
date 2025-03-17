@@ -32,3 +32,5 @@ static inline bool s3k_is_blocked(s3k_state_t state, s3k_chan_t *chan) {
 static inline bool s3k_is_suspended(s3k_state_t state) {
   return state == S3K_PSF_SUSPENDED;
 }
+
+const char *s3k_err2str(s3k_err_t err);
