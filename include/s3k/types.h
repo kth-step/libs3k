@@ -94,7 +94,8 @@ typedef union s3k_cap {
 
 	struct {
 		s3k_capty_t type : 4;
-		uint16_t _padding : 4;
+		uint16_t _padding : 3;
+		bool enabled : 1;
 		s3k_hart_t hart;
 		s3k_time_slot_t bgn;
 		s3k_time_slot_t mrk;

@@ -1,77 +1,6 @@
 #include "s3k.h"
 
-typedef union {
-	struct {
-		uint64_t a0, a1, a2, a3, a4, a5, a6, a7;
-	};
-
-	struct {
-		int info;
-	} get_info;
-
-	struct {
-		s3k_reg_t reg;
-		uint64_t val;
-	} reg;
-
-	struct {
-		bool full;
-	} sync;
-
-	struct {
-		s3k_cidx_t idx;
-		s3k_cidx_t dst_idx;
-		s3k_cap_t cap;
-	} cap;
-
-	struct {
-		s3k_cidx_t pmp_idx;
-		s3k_pmp_slot_t pmp_slot;
-	} pmp;
-
-	struct {
-		s3k_cidx_t mon_idx;
-		s3k_pid_t pid;
-	} mon_state;
-
-	struct {
-		s3k_cidx_t mon_idx;
-		s3k_pid_t pid;
-		s3k_reg_t reg;
-		uint64_t val;
-	} mon_reg;
-
-	struct {
-		s3k_cidx_t mon_idx;
-		s3k_pid_t src_pid;
-		s3k_cidx_t src_idx;
-		s3k_pid_t dst_pid;
-		s3k_cidx_t dst_idx;
-	} mon_cap;
-
-	struct {
-		s3k_cidx_t mon_idx;
-		s3k_pid_t pid;
-		s3k_cidx_t pmp_idx;
-		s3k_pmp_slot_t pmp_slot;
-	} mon_pmp;
-
-	struct {
-		s3k_cidx_t sock_idx;
-		s3k_cidx_t cap_idx;
-		bool send_cap;
-		uint64_t data[4];
-	} sock;
-} sys_args_t;
-
-typedef struct {
-	s3k_err_t err;
-	uint64_t val;
-} s3k_ret_t;
-
-_Static_assert(sizeof(sys_args_t) == 64, "sys_args_t has the wrong size");
-
-s3k_cap_t s3k_mk_time(s3k_hart_t hart, s3k_time_slot_t bgn, s3k_time_slot_t end)
+s3k_cap_t s3k_mk_time(s3k_hart_t hart, s3k_time_slot_t bgn, s3k_time_slot_t end, bool enabled)
 {
 	return (s3k_cap_t){
 	    .time = {
@@ -80,6 +9,7 @@ s3k_cap_t s3k_mk_time(s3k_hart_t hart, s3k_time_slot_t bgn, s3k_time_slot_t end)
 		     .bgn = bgn,
 		     .mrk = bgn,
 		     .end = end,
+		     .enabled = enabled,
 		     }
 	     };
 }
