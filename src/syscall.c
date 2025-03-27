@@ -38,6 +38,8 @@ typedef enum {
 
 	S3K_SYS_TIME_DERIVE,
 	S3K_SYS_TIME_REVOKE,
+
+	S3K_SYS_MON_TIME_DERIVE,
 } s3k_syscall_t;
 
 typedef union {
@@ -159,6 +161,15 @@ typedef union {
 	struct {
 		uint64_t idx;
 	} time_revoke;
+
+	struct {
+		uint64_t mon;
+		uint64_t src;
+		uint64_t pid;
+		uint64_t dst;
+		uint64_t len;
+		uint64_t enabled;
+	} mon_time_derive;
 } sys_args_t;
 
 typedef struct {
@@ -484,6 +495,16 @@ s3k_err_t s3k_time_revoke(s3k_cidx_t idx)
 	return err;
 }
 
+s3k_err_t s3k_mon_time_derive(s3k_cidx_t mon, s3k_cidx_t src, s3k_pid_t pid,
+			      s3k_cidx_t dst, uint64_t len, bool enabled)
+{
+	s3k_err_t err;
+	do {
+		err = s3k_try_mon_time_derive(mon, src, pid, dst, len, enabled);
+	} while (err == S3K_ERR_PREEMPTED);
+	return err;
+}
+
 s3k_err_t s3k_try_cap_move(s3k_cidx_t src, s3k_cidx_t dst)
 {
 	sys_args_t args = {
@@ -714,4 +735,15 @@ s3k_err_t s3k_try_time_revoke(s3k_cidx_t idx)
 {
 	sys_args_t args = {.time_revoke = {idx}};
 	return DO_ECALL(S3K_SYS_TIME_REVOKE, args, sizeof(args.time_revoke)).err;
+}
+
+s3k_err_t s3k_try_mon_time_derive(s3k_cidx_t mon, s3k_cidx_t src, s3k_pid_t pid,
+				  s3k_cidx_t dst, uint64_t len, bool enabled)
+{
+	sys_args_t args = {
+	    .mon_time_derive = {mon, src, pid, dst, len, enabled}
+	 };
+	return DO_ECALL(S3K_SYS_MON_TIME_DERIVE, args,
+			sizeof(args.mon_time_derive))
+	    .err;
 }
