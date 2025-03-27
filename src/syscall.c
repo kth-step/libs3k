@@ -460,7 +460,8 @@ s3k_reply_t s3k_sock_sendrecv(s3k_cidx_t sock_idx, const s3k_msg_t *msg)
 	return reply;
 }
 
-s3k_err_t s3k_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len, bool enabled)
+s3k_err_t s3k_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len,
+			  bool enabled)
 {
 	s3k_err_t err;
 	do {
@@ -686,10 +687,11 @@ s3k_reply_t s3k_try_sock_sendrecv(s3k_cidx_t sock_idx, const s3k_msg_t *msg)
 	return reply;
 }
 
-s3k_err_t s3k_try_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len, bool enabled)
+s3k_err_t s3k_try_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len,
+			      bool enabled)
 {
 	sys_args_t args = {
 	    .time_derive = {src, dst, len, enabled}
-	  };
+	   };
 	return DO_ECALL(S3K_SYS_TIME_DERIVE, args, sizeof(args.time_derive)).err;
 }

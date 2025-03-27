@@ -1,6 +1,7 @@
 #include "s3k.h"
 
-s3k_cap_t s3k_mk_time(s3k_hart_t hart, s3k_time_slot_t bgn, s3k_time_slot_t end, bool enabled)
+s3k_cap_t s3k_mk_time(s3k_hart_t hart, s3k_time_slot_t bgn, s3k_time_slot_t end,
+		      bool enabled)
 {
 	return (s3k_cap_t){
 	    .time = {
