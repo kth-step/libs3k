@@ -39,6 +39,7 @@ s3k_reply_t s3k_sock_sendrecv(s3k_cidx_t sock_idx, const s3k_msg_t *msg);
 
 s3k_err_t s3k_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len,
 			  bool enabled);
+s3k_err_t s3k_time_revoke(s3k_cidx_t idx);
 
 s3k_err_t s3k_try_cap_move(s3k_cidx_t src, s3k_cidx_t dst);
 s3k_err_t s3k_try_cap_delete(s3k_cidx_t idx);
@@ -68,3 +69,4 @@ s3k_reply_t s3k_try_sock_recv(s3k_cidx_t sock_idx, s3k_cidx_t cap_cidx);
 s3k_reply_t s3k_try_sock_sendrecv(s3k_cidx_t sock_idx, const s3k_msg_t *msg);
 s3k_err_t s3k_try_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len,
 			      bool enabled);
+s3k_err_t s3k_try_time_revoke(s3k_cidx_t idx);
