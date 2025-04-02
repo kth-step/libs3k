@@ -4,6 +4,7 @@
 uint64_t s3k_get_pid(void);
 uint64_t s3k_get_time(void);
 uint64_t s3k_get_timeout(void);
+uint64_t s3k_get_wcet(void);
 uint64_t s3k_reg_read(s3k_reg_t reg);
 uint64_t s3k_reg_write(s3k_reg_t reg, uint64_t val);
 void s3k_sync();
