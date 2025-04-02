@@ -38,6 +38,7 @@ typedef enum {
 
 	S3K_SYS_TIME_DERIVE,
 	S3K_SYS_TIME_REVOKE,
+	S3K_SYS_TIME_DELETE,
 
 	S3K_SYS_MON_TIME_DERIVE,
 } s3k_syscall_t;
@@ -163,6 +164,10 @@ typedef union {
 	} time_revoke;
 
 	struct {
+		uint64_t idx;
+	} time_delete;
+
+	struct {
 		uint64_t mon;
 		uint64_t src;
 		uint64_t pid;
@@ -239,6 +244,255 @@ _Static_assert(sizeof(sys_args_t) == 64, "sys_args_t has the wrong size");
 		}                                                              \
 		(s3k_ret_t){.err = t0, .val = a0};                             \
 	})
+
+s3k_err_t s3k_try_cap_move(s3k_cidx_t src, s3k_cidx_t dst)
+{
+	sys_args_t args = {
+	    .cap_move = {src, dst}
+	  };
+	return DO_ECALL(S3K_SYS_CAP_MOVE, args, sizeof(args.cap_move)).err;
+}
+
+s3k_err_t s3k_try_cap_delete(s3k_cidx_t idx)
+{
+	const sys_args_t args = {.cap_delete = {idx}};
+	return DO_ECALL(S3K_SYS_CAP_DELETE, args, sizeof(args.cap_delete)).err;
+}
+
+s3k_err_t s3k_try_cap_revoke(s3k_cidx_t idx)
+{
+	sys_args_t args = {.cap_revoke = {idx}};
+	return DO_ECALL(S3K_SYS_CAP_REVOKE, args, sizeof(args.cap_revoke)).err;
+}
+
+s3k_err_t s3k_try_cap_derive(s3k_cidx_t src, s3k_cidx_t dst, s3k_cap_t ncap)
+{
+	sys_args_t args = {
+	    .cap_derive = {src, dst, ncap.raw}
+	      };
+	return DO_ECALL(S3K_SYS_CAP_DERIVE, args, sizeof(args.cap_derive)).err;
+}
+
+s3k_err_t s3k_try_pmp_load(s3k_cidx_t idx, s3k_pmp_slot_t slot)
+{
+	sys_args_t args = {
+	    .pmp_load = {idx, slot}
+	   };
+	return DO_ECALL(S3K_SYS_PMP_LOAD, args, sizeof(args.pmp_load)).err;
+}
+
+s3k_err_t s3k_try_pmp_unload(s3k_cidx_t idx)
+{
+	sys_args_t args = {.pmp_unload = {idx}};
+	return DO_ECALL(S3K_SYS_PMP_UNLOAD, args, sizeof(args.pmp_unload)).err;
+}
+
+s3k_err_t s3k_try_mon_suspend(s3k_cidx_t mon, s3k_pid_t pid)
+{
+	sys_args_t args = {
+	    .mon_state = {mon, pid}
+	   };
+	return DO_ECALL(S3K_SYS_MON_SUSPEND, args, sizeof(args.mon_state)).err;
+}
+
+s3k_err_t s3k_try_mon_resume(s3k_cidx_t mon, s3k_pid_t pid)
+{
+	sys_args_t args = {
+	    .mon_state = {mon, pid}
+	   };
+	return DO_ECALL(S3K_SYS_MON_RESUME, args, sizeof(args.mon_state)).err;
+}
+
+s3k_err_t s3k_try_mon_state_get(s3k_cidx_t mon, s3k_pid_t pid,
+				s3k_state_t *state)
+{
+	sys_args_t args = {
+	    .mon_state = {mon, pid}
+	   };
+	s3k_ret_t ret
+	    = DO_ECALL(S3K_SYS_MON_STATE_GET, args, sizeof(args.mon_state));
+	*state = ret.val;
+	return ret.err;
+}
+
+s3k_err_t s3k_try_mon_yield(s3k_cidx_t mon, s3k_pid_t pid)
+{
+	sys_args_t args = {
+	    .mon_state = {mon, pid}
+	   };
+	return DO_ECALL(S3K_SYS_MON_YIELD, args, sizeof(args.mon_state)).err;
+}
+
+s3k_err_t s3k_try_mon_reg_read(s3k_cidx_t mon, s3k_pid_t pid, s3k_reg_t reg,
+			       uint64_t *val)
+{
+	sys_args_t args = {
+	    .mon_reg_read = {mon, pid, reg}
+	   };
+	s3k_ret_t ret
+	    = DO_ECALL(S3K_SYS_MON_REG_READ, args, sizeof(args.mon_reg_read));
+	*val = ret.val;
+	return ret.err;
+}
+
+s3k_err_t s3k_try_mon_reg_write(s3k_cidx_t mon, s3k_pid_t pid, s3k_reg_t reg,
+				uint64_t val)
+{
+	sys_args_t args = {
+	    .mon_reg_write = {mon, pid, reg, val}
+	 };
+	s3k_ret_t ret
+	    = DO_ECALL(S3K_SYS_MON_REG_WRITE, args, sizeof(args.mon_reg_write));
+	return ret.err;
+}
+
+s3k_err_t s3k_try_mon_cap_read(s3k_cidx_t mon_idx, s3k_pid_t pid,
+			       s3k_cidx_t idx, s3k_cap_t *cap)
+{
+	sys_args_t args = {
+	    .mon_cap_read = {mon_idx, pid, idx}
+	       };
+	s3k_ret_t ret
+	    = DO_ECALL(S3K_SYS_MON_CAP_READ, args, sizeof(args.mon_cap_read));
+	if (!ret.err)
+		cap->raw = ret.val;
+	return ret.err;
+}
+
+s3k_err_t s3k_try_mon_cap_send(s3k_cidx_t mon_idx, s3k_cidx_t src_idx,
+			       s3k_pid_t dst_pid, s3k_cidx_t dst_idx)
+{
+	sys_args_t args = {
+	    .mon_cap_send = {mon_idx, src_idx, dst_pid, dst_idx}
+	};
+	return DO_ECALL(S3K_SYS_MON_CAP_SEND, args, sizeof(args.mon_cap_send))
+	    .err;
+}
+
+s3k_err_t s3k_try_mon_pmp_load(s3k_cidx_t mon_idx, s3k_pid_t pid,
+			       s3k_cidx_t idx, s3k_pmp_slot_t slot)
+{
+	sys_args_t args = {
+	    .mon_pmp_load = {mon_idx, pid, idx, slot}
+	     };
+	return DO_ECALL(S3K_SYS_MON_PMP_LOAD, args, sizeof(args.mon_pmp_load))
+	    .err;
+}
+
+s3k_err_t s3k_try_mon_pmp_unload(s3k_cidx_t mon_idx, s3k_pid_t pid,
+				 s3k_cidx_t idx)
+{
+	sys_args_t args = {
+	    .mon_pmp_unload = {mon_idx, pid, idx}
+	 };
+	return DO_ECALL(S3K_SYS_MON_PMP_UNLOAD, args,
+			sizeof(args.mon_pmp_unload))
+	    .err;
+}
+
+s3k_err_t s3k_try_sock_send(s3k_cidx_t sock_idx, const s3k_msg_t *msg)
+{
+	sys_args_t args = {
+	    .sock = {.sock_idx = sock_idx,
+		     .cap_idx = msg->cap_idx,
+		     .send_cap = msg->send_cap,
+		     {msg->data[0], msg->data[1], msg->data[2], msg->data[3]}}
+	      };
+	return DO_ECALL(S3K_SYS_SOCK_SEND, args, sizeof(args.sock)).err;
+}
+
+s3k_reply_t s3k_try_sock_recv(s3k_cidx_t sock_idx, s3k_cidx_t cap_idx)
+{
+	sys_args_t args = {
+	    .sock = {.sock_idx = sock_idx, .cap_idx = cap_idx}
+	      };
+	register uint64_t t0 __asm__("t0") = S3K_SYS_SOCK_RECV;
+	register uint64_t a0 __asm__("a0") = args.a0;
+	register uint64_t a1 __asm__("a1") = args.a1;
+	register uint64_t a2 __asm__("a2") = args.a2;
+	register uint64_t a3 __asm__("a3") = args.a3;
+	register uint64_t a4 __asm__("a4") = args.a4;
+	register uint64_t a5 __asm__("a5") = args.a5;
+	register uint64_t a6 __asm__("a6") = args.a6;
+	register uint64_t a7 __asm__("a7") = args.a7;
+	__asm__ volatile("ecall"
+			 : "+r"(t0), "+r"(a0), "+r"(a1), "+r"(a2), "+r"(a3),
+			   "+r"(a4), "+r"(a5)
+			 : "r"(a6), "r"(a7));
+	s3k_reply_t reply;
+	reply.err = t0;
+	reply.tag = a0;
+	reply.cap.raw = a1;
+	reply.data[0] = a2;
+	reply.data[1] = a3;
+	reply.data[2] = a4;
+	reply.data[3] = a5;
+	return reply;
+}
+
+s3k_reply_t s3k_try_sock_sendrecv(s3k_cidx_t sock_idx, const s3k_msg_t *msg)
+{
+	sys_args_t args = {
+	    .sock = {.sock_idx = sock_idx,
+		     .cap_idx = msg->cap_idx,
+		     .send_cap = msg->send_cap,
+		     {msg->data[0], msg->data[1], msg->data[2], msg->data[3]}}
+	      };
+	register uint64_t t0 __asm__("t0") = S3K_SYS_SOCK_SENDRECV;
+	register uint64_t a0 __asm__("a0") = args.a0;
+	register uint64_t a1 __asm__("a1") = args.a1;
+	register uint64_t a2 __asm__("a2") = args.a2;
+	register uint64_t a3 __asm__("a3") = args.a3;
+	register uint64_t a4 __asm__("a4") = args.a4;
+	register uint64_t a5 __asm__("a5") = args.a5;
+	register uint64_t a6 __asm__("a6") = args.a6;
+	register uint64_t a7 __asm__("a7") = args.a7;
+	__asm__ volatile("ecall"
+			 : "+r"(t0), "+r"(a0), "+r"(a1), "+r"(a2), "+r"(a3),
+			   "+r"(a4), "+r"(a5)
+			 : "r"(a6), "r"(a7));
+	s3k_reply_t reply;
+	reply.err = t0;
+	reply.tag = a0;
+	reply.cap.raw = a1;
+	reply.data[0] = a2;
+	reply.data[1] = a3;
+	reply.data[2] = a4;
+	reply.data[3] = a5;
+	return reply;
+}
+
+s3k_err_t s3k_try_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len,
+			      bool enabled)
+{
+	sys_args_t args = {
+	    .time_derive = {src, dst, len, enabled}
+	   };
+	return DO_ECALL(S3K_SYS_TIME_DERIVE, args, sizeof(args.time_derive)).err;
+}
+
+s3k_err_t s3k_try_time_revoke(s3k_cidx_t idx)
+{
+	sys_args_t args = {.time_revoke = {idx}};
+	return DO_ECALL(S3K_SYS_TIME_REVOKE, args, sizeof(args.time_revoke)).err;
+}
+
+s3k_err_t s3k_try_time_delete(s3k_cidx_t idx)
+{
+	sys_args_t args = {.time_delete = {idx}};
+	return DO_ECALL(S3K_SYS_TIME_DELETE, args, sizeof(args.time_delete)).err;
+}
+
+s3k_err_t s3k_try_mon_time_derive(s3k_cidx_t mon, s3k_cidx_t src, s3k_pid_t pid,
+				  s3k_cidx_t dst, uint64_t len, bool enabled)
+{
+	sys_args_t args = {
+	    .mon_time_derive = {mon, src, pid, dst, len, enabled}
+	 };
+	return DO_ECALL(S3K_SYS_MON_TIME_DERIVE, args,
+			sizeof(args.mon_time_derive))
+	    .err;
+}
 
 uint64_t s3k_get_pid(void)
 {
@@ -495,6 +749,15 @@ s3k_err_t s3k_time_revoke(s3k_cidx_t idx)
 	return err;
 }
 
+s3k_err_t s3k_time_delete(s3k_cidx_t idx)
+{
+	s3k_err_t err;
+	do {
+		err = s3k_try_time_delete(idx);
+	} while (err == S3K_ERR_PREEMPTED);
+	return err;
+}
+
 s3k_err_t s3k_mon_time_derive(s3k_cidx_t mon, s3k_cidx_t src, s3k_pid_t pid,
 			      s3k_cidx_t dst, uint64_t len, bool enabled)
 {
@@ -503,247 +766,4 @@ s3k_err_t s3k_mon_time_derive(s3k_cidx_t mon, s3k_cidx_t src, s3k_pid_t pid,
 		err = s3k_try_mon_time_derive(mon, src, pid, dst, len, enabled);
 	} while (err == S3K_ERR_PREEMPTED);
 	return err;
-}
-
-s3k_err_t s3k_try_cap_move(s3k_cidx_t src, s3k_cidx_t dst)
-{
-	sys_args_t args = {
-	    .cap_move = {src, dst}
-	  };
-	return DO_ECALL(S3K_SYS_CAP_MOVE, args, sizeof(args.cap_move)).err;
-}
-
-s3k_err_t s3k_try_cap_delete(s3k_cidx_t idx)
-{
-	const sys_args_t args = {.cap_delete = {idx}};
-	return DO_ECALL(S3K_SYS_CAP_DELETE, args, sizeof(args.cap_delete)).err;
-}
-
-s3k_err_t s3k_try_cap_revoke(s3k_cidx_t idx)
-{
-	sys_args_t args = {.cap_revoke = {idx}};
-	return DO_ECALL(S3K_SYS_CAP_REVOKE, args, sizeof(args.cap_revoke)).err;
-}
-
-s3k_err_t s3k_try_cap_derive(s3k_cidx_t src, s3k_cidx_t dst, s3k_cap_t ncap)
-{
-	sys_args_t args = {
-	    .cap_derive = {src, dst, ncap.raw}
-	      };
-	return DO_ECALL(S3K_SYS_CAP_DERIVE, args, sizeof(args.cap_derive)).err;
-}
-
-s3k_err_t s3k_try_pmp_load(s3k_cidx_t idx, s3k_pmp_slot_t slot)
-{
-	sys_args_t args = {
-	    .pmp_load = {idx, slot}
-	   };
-	return DO_ECALL(S3K_SYS_PMP_LOAD, args, sizeof(args.pmp_load)).err;
-}
-
-s3k_err_t s3k_try_pmp_unload(s3k_cidx_t idx)
-{
-	sys_args_t args = {.pmp_unload = {idx}};
-	return DO_ECALL(S3K_SYS_PMP_UNLOAD, args, sizeof(args.pmp_unload)).err;
-}
-
-s3k_err_t s3k_try_mon_suspend(s3k_cidx_t mon, s3k_pid_t pid)
-{
-	sys_args_t args = {
-	    .mon_state = {mon, pid}
-	   };
-	return DO_ECALL(S3K_SYS_MON_SUSPEND, args, sizeof(args.mon_state)).err;
-}
-
-s3k_err_t s3k_try_mon_resume(s3k_cidx_t mon, s3k_pid_t pid)
-{
-	sys_args_t args = {
-	    .mon_state = {mon, pid}
-	   };
-	return DO_ECALL(S3K_SYS_MON_RESUME, args, sizeof(args.mon_state)).err;
-}
-
-s3k_err_t s3k_try_mon_state_get(s3k_cidx_t mon, s3k_pid_t pid,
-				s3k_state_t *state)
-{
-	sys_args_t args = {
-	    .mon_state = {mon, pid}
-	   };
-	s3k_ret_t ret
-	    = DO_ECALL(S3K_SYS_MON_STATE_GET, args, sizeof(args.mon_state));
-	*state = ret.val;
-	return ret.err;
-}
-
-s3k_err_t s3k_try_mon_yield(s3k_cidx_t mon, s3k_pid_t pid)
-{
-	sys_args_t args = {
-	    .mon_state = {mon, pid}
-	   };
-	return DO_ECALL(S3K_SYS_MON_YIELD, args, sizeof(args.mon_state)).err;
-}
-
-s3k_err_t s3k_try_mon_reg_read(s3k_cidx_t mon, s3k_pid_t pid, s3k_reg_t reg,
-			       uint64_t *val)
-{
-	sys_args_t args = {
-	    .mon_reg_read = {mon, pid, reg}
-	   };
-	s3k_ret_t ret
-	    = DO_ECALL(S3K_SYS_MON_REG_READ, args, sizeof(args.mon_reg_read));
-	*val = ret.val;
-	return ret.err;
-}
-
-s3k_err_t s3k_try_mon_reg_write(s3k_cidx_t mon, s3k_pid_t pid, s3k_reg_t reg,
-				uint64_t val)
-{
-	sys_args_t args = {
-	    .mon_reg_write = {mon, pid, reg, val}
-	 };
-	s3k_ret_t ret
-	    = DO_ECALL(S3K_SYS_MON_REG_WRITE, args, sizeof(args.mon_reg_write));
-	return ret.err;
-}
-
-s3k_err_t s3k_try_mon_cap_read(s3k_cidx_t mon_idx, s3k_pid_t pid,
-			       s3k_cidx_t idx, s3k_cap_t *cap)
-{
-	sys_args_t args = {
-	    .mon_cap_read = {mon_idx, pid, idx}
-	       };
-	s3k_ret_t ret
-	    = DO_ECALL(S3K_SYS_MON_CAP_READ, args, sizeof(args.mon_cap_read));
-	if (!ret.err)
-		cap->raw = ret.val;
-	return ret.err;
-}
-
-s3k_err_t s3k_try_mon_cap_send(s3k_cidx_t mon_idx, s3k_cidx_t src_idx,
-			       s3k_pid_t dst_pid, s3k_cidx_t dst_idx)
-{
-	sys_args_t args = {
-	    .mon_cap_send = {mon_idx, src_idx, dst_pid, dst_idx}
-	};
-	return DO_ECALL(S3K_SYS_MON_CAP_SEND, args, sizeof(args.mon_cap_send))
-	    .err;
-}
-
-s3k_err_t s3k_try_mon_pmp_load(s3k_cidx_t mon_idx, s3k_pid_t pid,
-			       s3k_cidx_t idx, s3k_pmp_slot_t slot)
-{
-	sys_args_t args = {
-	    .mon_pmp_load = {mon_idx, pid, idx, slot}
-	     };
-	return DO_ECALL(S3K_SYS_MON_PMP_LOAD, args, sizeof(args.mon_pmp_load))
-	    .err;
-}
-
-s3k_err_t s3k_try_mon_pmp_unload(s3k_cidx_t mon_idx, s3k_pid_t pid,
-				 s3k_cidx_t idx)
-{
-	sys_args_t args = {
-	    .mon_pmp_unload = {mon_idx, pid, idx}
-	 };
-	return DO_ECALL(S3K_SYS_MON_PMP_UNLOAD, args,
-			sizeof(args.mon_pmp_unload))
-	    .err;
-}
-
-s3k_err_t s3k_try_sock_send(s3k_cidx_t sock_idx, const s3k_msg_t *msg)
-{
-	sys_args_t args = {
-	    .sock = {.sock_idx = sock_idx,
-		     .cap_idx = msg->cap_idx,
-		     .send_cap = msg->send_cap,
-		     {msg->data[0], msg->data[1], msg->data[2], msg->data[3]}}
-	      };
-	return DO_ECALL(S3K_SYS_SOCK_SEND, args, sizeof(args.sock)).err;
-}
-
-s3k_reply_t s3k_try_sock_recv(s3k_cidx_t sock_idx, s3k_cidx_t cap_idx)
-{
-	sys_args_t args = {
-	    .sock = {.sock_idx = sock_idx, .cap_idx = cap_idx}
-	      };
-	register uint64_t t0 __asm__("t0") = S3K_SYS_SOCK_RECV;
-	register uint64_t a0 __asm__("a0") = args.a0;
-	register uint64_t a1 __asm__("a1") = args.a1;
-	register uint64_t a2 __asm__("a2") = args.a2;
-	register uint64_t a3 __asm__("a3") = args.a3;
-	register uint64_t a4 __asm__("a4") = args.a4;
-	register uint64_t a5 __asm__("a5") = args.a5;
-	register uint64_t a6 __asm__("a6") = args.a6;
-	register uint64_t a7 __asm__("a7") = args.a7;
-	__asm__ volatile("ecall"
-			 : "+r"(t0), "+r"(a0), "+r"(a1), "+r"(a2), "+r"(a3),
-			   "+r"(a4), "+r"(a5)
-			 : "r"(a6), "r"(a7));
-	s3k_reply_t reply;
-	reply.err = t0;
-	reply.tag = a0;
-	reply.cap.raw = a1;
-	reply.data[0] = a2;
-	reply.data[1] = a3;
-	reply.data[2] = a4;
-	reply.data[3] = a5;
-	return reply;
-}
-
-s3k_reply_t s3k_try_sock_sendrecv(s3k_cidx_t sock_idx, const s3k_msg_t *msg)
-{
-	sys_args_t args = {
-	    .sock = {.sock_idx = sock_idx,
-		     .cap_idx = msg->cap_idx,
-		     .send_cap = msg->send_cap,
-		     {msg->data[0], msg->data[1], msg->data[2], msg->data[3]}}
-	      };
-	register uint64_t t0 __asm__("t0") = S3K_SYS_SOCK_SENDRECV;
-	register uint64_t a0 __asm__("a0") = args.a0;
-	register uint64_t a1 __asm__("a1") = args.a1;
-	register uint64_t a2 __asm__("a2") = args.a2;
-	register uint64_t a3 __asm__("a3") = args.a3;
-	register uint64_t a4 __asm__("a4") = args.a4;
-	register uint64_t a5 __asm__("a5") = args.a5;
-	register uint64_t a6 __asm__("a6") = args.a6;
-	register uint64_t a7 __asm__("a7") = args.a7;
-	__asm__ volatile("ecall"
-			 : "+r"(t0), "+r"(a0), "+r"(a1), "+r"(a2), "+r"(a3),
-			   "+r"(a4), "+r"(a5)
-			 : "r"(a6), "r"(a7));
-	s3k_reply_t reply;
-	reply.err = t0;
-	reply.tag = a0;
-	reply.cap.raw = a1;
-	reply.data[0] = a2;
-	reply.data[1] = a3;
-	reply.data[2] = a4;
-	reply.data[3] = a5;
-	return reply;
-}
-
-s3k_err_t s3k_try_time_derive(s3k_cidx_t src, s3k_cidx_t dst, uint64_t len,
-			      bool enabled)
-{
-	sys_args_t args = {
-	    .time_derive = {src, dst, len, enabled}
-	   };
-	return DO_ECALL(S3K_SYS_TIME_DERIVE, args, sizeof(args.time_derive)).err;
-}
-
-s3k_err_t s3k_try_time_revoke(s3k_cidx_t idx)
-{
-	sys_args_t args = {.time_revoke = {idx}};
-	return DO_ECALL(S3K_SYS_TIME_REVOKE, args, sizeof(args.time_revoke)).err;
-}
-
-s3k_err_t s3k_try_mon_time_derive(s3k_cidx_t mon, s3k_cidx_t src, s3k_pid_t pid,
-				  s3k_cidx_t dst, uint64_t len, bool enabled)
-{
-	sys_args_t args = {
-	    .mon_time_derive = {mon, src, pid, dst, len, enabled}
-	 };
-	return DO_ECALL(S3K_SYS_MON_TIME_DERIVE, args,
-			sizeof(args.mon_time_derive))
-	    .err;
 }
